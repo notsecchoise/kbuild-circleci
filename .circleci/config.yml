@@ -37,6 +37,7 @@ jobs:
             git config --global user.name "${CIRCLE_PROJECT_USERNAME}"
             git config --global user.email "${CIRCLE_PROJECT_USERNAME}@gmail.com"
             git clone ${KERNEL_REPO} -b ${KERNEL_BRANCH} --depth=500 kernel
+            cd kernel 
             sed -i 's/^CONFIG_LOCALVERSION=".*"/CONFIG_LOCALVERSION="-BlackSapphire"/' arch/arm64/configs/${DEVICE_DEFCONFIG}
           environment:
             KERNEL_REPO: https://GitLab.com/MT6768Lab/KernelTree.git
