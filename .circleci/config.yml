@@ -40,7 +40,7 @@ jobs:
             cd kernel 
             sed -i 's/^CONFIG_LOCALVERSION=".*"/CONFIG_LOCALVERSION="-BlackSapphire"/' arch/arm64/configs/${DEVICE_DEFCONFIG}
           environment:
-            KERNEL_REPO: https://GitLab.com/MT6768Lab/KernelTree.git
+            KERNEL_REPO: https://github.com/Burhanverse/kerneltree.git
             KERNEL_BRANCH: 13
             DEVICE_DEFCONFIG: lancelot_defconfig
 
