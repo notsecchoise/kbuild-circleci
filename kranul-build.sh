@@ -167,9 +167,9 @@ function updateclang() {
 }
 
 # Enviromental variable
-DEVICE_MODEL="Redmi 9"
-DEVICE_CODENAME="lancelot"
-export DEVICE_DEFCONFIG="lancelot_defconfig"
+DEVICE_MODEL="Redmi Note 9"
+DEVICE_CODENAME="merlin"
+export DEVICE_DEFCONFIG="merlin_defconfig"
 export ARCH="arm64"
 export KBUILD_BUILD_USER="Olga"
 export KBUILD_BUILD_HOST="ProjectParadox"
