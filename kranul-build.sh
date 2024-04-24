@@ -87,22 +87,6 @@ function getclang() {
       ClangPath="${MainClangPath}"-zyc
       export PATH="${ClangPath}/bin:${PATH}"
     fi
-elif [ "${ClangName}" = "wbx" ]; then
-    if [ ! -f "${MainClangPath}-wbx/bin/clang" ]; then
-      echo "[!] Clang is set to wbx, cloning it..."
-      mkdir -p ${MainClangPath}-wbx
-      cd clang-wbx
-      wget -q $(curl -k https://raw.githubusercontent.com/XSans0/WeebX-Clang/main/main/link.txt 2>/dev/null) -O "weebx-clang.tar.gz"
-      tar -xf weebx-clang.tar.gz
-      ClangPath="${MainClangPath}"-wbx
-      export PATH="${ClangPath}/bin:${PATH}"
-      rm -f weebx-clang.tar.gz
-      cd ..
-    else
-      echo "[!] Clang already exists. Skipping..."
-      ClangPath="${MainClangPath}"-wbx
-      export PATH="${ClangPath}/bin:${PATH}"
-    fi
   else
     echo "[!] Incorrect clang name. Check config.env for clang names."
     exit 1
@@ -139,20 +123,6 @@ function updateclang() {
         echo "[!] No updates have been found, skipping..."
       fi
       cd ..
-    elif [ "${ClangName}" = "wbx" ]; then
-      echo "[!] Clang is set to wbx, checking for updates..."
-      cd clang-wbx
-      WbxLatest="$(curl -k https://raw.githubusercontent.com/XSans0/WeebX-Clang/main/Clang-main-lastbuild.txt)"
-      if [ "$(cat README.md | grep "Build Date : " | cut -d: -f2 | sed "s/ //g")" != "${WbxLatest}" ];then
-        echo "[!] An update have been found, updating..."
-        sudo rm -rf ./*
-        wget -q $(curl -k https://raw.githubusercontent.com/XSans0/WeebX-Clang/main/Clang-main-link.txt 2>/dev/null) -O "weebx-clang.tar.gz
-        tar -xf weebx-clang.tar.gz
-        rm -f weebx-clang.tar.gz
-      else
-        echo "[!] No updates have been found, skipping..."
-      fi
-      cd ..
     elif [ "${ClangName}" = "azure" ]; then
       cd clang-azure
       git fetch -q origin main
@@ -172,7 +142,7 @@ DEVICE_CODENAME="merlin"
 export DEVICE_DEFCONFIG="merlin_defconfig"
 export ARCH="arm64"
 export KBUILD_BUILD_USER="Olga"
-export KBUILD_BUILD_HOST="ProjectParadox"
+export KBUILD_BUILD_HOST="CI"
 export KERNEL_NAME="$(cat "arch/arm64/configs/$DEVICE_DEFCONFIG" | grep "CONFIG_LOCALVERSION=" | sed 's/CONFIG_LOCALVERSION="-*//g' | sed 's/"*//g' )"
 export SUBLEVEL="v4.14.$(cat "${MainPath}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')"
 IMAGE="${MainPath}/out/arch/arm64/boot/Image.gz-dtb"
@@ -221,9 +191,9 @@ make -j"$CORES" ARCH=$ARCH O=out \
 function zipping() {
     cd ${AnyKernelPath} || exit 1
     if [ "$KERNELSU" = "yes" ];then
-    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME}) | KernelSU Version: ${KERNELSU_VERSION}/g" anykernel.sh 
+      sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME}) | KernelSU Version: ${KERNELSU_VERSION}/g" anykernel.sh
     else
-    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
+      sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
     fi
     zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_NAME}-${SUBLEVEL}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
     cd ..
@@ -235,7 +205,7 @@ function zipping() {
 
 # Cleanup function
 function cleanup() {
-    cd ${MainPath} 
+    cd ${MainPath}
     sudo rm -rf ${AnyKernelPath}
     sudo rm -rf out/
 }
