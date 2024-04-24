@@ -189,14 +189,24 @@ make -j"$CORES" ARCH=$ARCH O=out \
 
 # Zipping function
 function zipping() {
-    cd ${AnyKernelPath} || exit 1
-    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
-    zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_NAME}-${SUBLEVEL}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
-    cd ..
-    mkdir -p builds
-    zipname="$(basename $(echo ${AnyKernelPath}/*.zip | sed "s/.zip//g"))"
-    cp ${AnyKernelPath}/*.zip ./builds/${zipname}-$DATE.zip
-    cleanup
+  if [[ -z "${AnyKernelPath}" ]]; then
+    echo "Error: AnyKernelPath is not defined."
+    return 1
+  fi
+
+  cd "${AnyKernelPath}" || { echo "Error: Failed to change directory to ${AnyKernelPath}"; return 1; }
+
+  sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
+
+  zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_NAME}-${SUBLEVEL}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
+
+  cd ..
+  mkdir -p builds
+
+  zipname="$(basename $(ls -t ${AnyKernelPath}/*.zip | head -n 1))"  # More reliable way to get the latest zip
+  cp ${AnyKernelPath}/${zipname} ./builds/${zipname%.*}-$DATE.zip  # Remove .zip extension before adding date
+
+  cleanup
 }
 
 # Cleanup function
