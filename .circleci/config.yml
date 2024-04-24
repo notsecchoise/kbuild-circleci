@@ -38,10 +38,10 @@ jobs:
             git config --global user.email "${CIRCLE_PROJECT_USERNAME}@gmail.com"
             git clone ${KERNEL_REPO} -b ${KERNEL_BRANCH} --depth=500 kernel
             cd kernel 
-            sed -i 's/^CONFIG_LOCALVERSION=".*"/CONFIG_LOCALVERSION="-Paradox-EQ"/' arch/arm64/configs/${DEVICE_DEFCONFIG}
+            sed -i 's/^CONFIG_LOCALVERSION=".*"/CONFIG_LOCALVERSION="-Paradoxian-R1"/' arch/arm64/configs/${DEVICE_DEFCONFIG}
           environment:
-            KERNEL_REPO: https://github.com/nahhk/android_kernel_xiaomi_mt6768.git
-            KERNEL_BRANCH: aosp-13
+            KERNEL_REPO: https://github.com/esaaramadhan/android_kernel_xiaomi_mt6768.git
+            KERNEL_BRANCH: T-Balanced
             DEVICE_DEFCONFIG: lancelot_defconfig
 
       - run:
