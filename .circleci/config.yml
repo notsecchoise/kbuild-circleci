@@ -41,8 +41,8 @@ jobs:
             sed -i 's/^CONFIG_LOCALVERSION=".*"/CONFIG_LOCALVERSION="-Paradox-EQ"/' arch/arm64/configs/${DEVICE_DEFCONFIG}
           environment:
             KERNEL_REPO: https://github.com/nahhk/android_kernel_xiaomi_mt6768.git
-            KERNEL_BRANCH: aosp-14/bpf
-            DEVICE_DEFCONFIG: merlin_defconfig
+            KERNEL_BRANCH: aosp-13
+            DEVICE_DEFCONFIG: lancelot_defconfig
 
       - run:
           name: Build
