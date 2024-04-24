@@ -190,10 +190,8 @@ make -j"$CORES" ARCH=$ARCH O=out \
 # Zipping function
 function zipping() {
     cd ${AnyKernelPath} || exit 1
-    if [ "$KERNELSU" = "yes" ];then
-      sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME}) | KernelSU Version: ${KERNELSU_VERSION}/g" anykernel.sh
-    else
-      sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
+    fi
+    sed -i "s/kernel.string=.*/kernel.string=${KERNEL_NAME} ${SUBLEVEL} ${KERNEL_VARIANT} by ${KBUILD_BUILD_USER} for ${DEVICE_MODEL} (${DEVICE_CODENAME})/g" anykernel.sh
     fi
     zip -r9 "[${KERNEL_VARIANT}]"-${KERNEL_NAME}-${SUBLEVEL}-${DEVICE_CODENAME}.zip * -x .git README.md *placeholder
     cd ..
@@ -210,23 +208,8 @@ function cleanup() {
     sudo rm -rf out/
 }
 
-# KernelSU function
-function kernelsu() {
-    if [ "$KERNELSU" = "yes" ];then
-      KERNEL_VARIANT="${KERNEL_VARIANT}-KernelSU"
-      if [ ! -f "${MainPath}/KernelSU/README.md" ]; then
-        cd ${MainPath}
-        curl -LSsk "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        sed -i "s/CONFIG_KSU=n/CONFIG_KSU=y/g" arch/${ARCH}/configs/${DEVICE_DEFCONFIG}
-      fi
-      KERNELSU_VERSION="$((10000 + $(cd KernelSU && git rev-list --count HEAD) + 200))"
-      git submodule update --init; cd ${MainPath}/KernelSU; git pull origin main; cd ..
-    fi
-}
-
 getclang
 updateclang
-kernelsu
 compile
 zipping
 END=$(date +"%s")
