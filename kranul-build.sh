@@ -137,12 +137,13 @@ function updateclang() {
 }
 
 # Enviromental variable
-DEVICE_MODEL="Redmi 9"
-DEVICE_CODENAME="lancelot"
-export DEVICE_DEFCONFIG="lancelot_defconfig"
+DEVICE_MODEL="Redmi Note 9"
+DEVICE_CODENAME="merlin"
+export DEVICE_DEFCONFIG="merlin_defconfig"
 export ARCH="arm64"
-export KBUILD_BUILD_USER="Olga"
-export KBUILD_BUILD_HOST="CI"
+export KBUILD_BUILD_USER="Dréams"
+export KBUILD_BUILD_HOST="Soulvibe"
+export KBUILD_COMPILER_STRING="Soulvibeast clang version 18.5.1xRev1"
 export KERNEL_NAME="$(cat "arch/arm64/configs/$DEVICE_DEFCONFIG" | grep "CONFIG_LOCALVERSION=" | sed 's/CONFIG_LOCALVERSION="-*//g' | sed 's/"*//g' )"
 export SUBLEVEL="v4.14.$(cat "${MainPath}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')"
 IMAGE="${MainPath}/out/arch/arm64/boot/Image.gz-dtb"
