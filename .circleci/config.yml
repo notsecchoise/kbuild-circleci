@@ -42,7 +42,7 @@ jobs:
           environment:
             KERNEL_REPO: https://github.com/Soulvibe-Stuff/android_kernel_xiaomi_mt6785.git
             KERNEL_BRANCH: UDC
-            DEVICE_DEFCONFIG: lacelot_defconfig
+            DEVICE_DEFCONFIG: lancelot_defconfig
 
       - run:
           name: Build
