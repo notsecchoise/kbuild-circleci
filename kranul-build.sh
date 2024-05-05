@@ -63,7 +63,7 @@ function getclang() {
   elif [ "${ClangName}" = "proton" ]; then
     if [ ! -f "${MainClangPath}-proton/bin/clang" ]; then
       echo "[!] Clang is set to proton, cloning it..."
-      git clone https://github.com/kdrag0n/proton-clang clang-proton --depth=1
+      git clone https://gitlab.com/LeCmnGend/proton-clang.git -b clang-17 clang-proton --depth=1
       ClangPath="${MainClangPath}"-proton
       export PATH="${ClangPath}/bin:${PATH}"
     else
