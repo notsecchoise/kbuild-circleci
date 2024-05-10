@@ -87,14 +87,23 @@ function getclang() {
       ClangPath="${MainClangPath}"-zyc
       export PATH="${ClangPath}/bin:${PATH}"
     fi
+    elif [ "${ClangName}" = "ewc" ]; then
+    if [ ! -f "${MainClangPath}-ewc/bin/clang" ]; then
+      echo "[!] Clang is set to ElectroWizard, cloning it..."
+      git clone --depth=1 https://gitlab.com/Tiktodz/electrowizard-clang.git -b 16 --single-branch ewc
+      ClangPath="${MainClangPath}"-ewc
+      export PATH="${ClangPath}/bin:${PATH}"
+    else
+      echo "[!] Clang already exists. Skipping..."
+      ClangPath="${MainClangPath}"-ewc
+      export PATH="${ClangPath}/bin:${PATH}"
+    fi
   else
     echo "[!] Incorrect clang name. Check config.env for clang names."
     exit 1
   fi
   if [ ! -f '${MainClangPath}-${ClangName}/bin/clang' ]; then
-    export KBUILD_COMPILER_STRING="$(${MainClangPath}-${ClangName}/bin/clang --version | head -n 1)"
-  else
-    export KBUILD_COMPILER_STRING="Unknown"
+    export KBUILD_COMPILER_STRING="Soulvibe clang version 18.5.1xR0.1"
   fi
 }
 
@@ -133,6 +142,11 @@ function updateclang() {
       git fetch -q origin master
       git pull origin master
       cd ..
+    elif [ "${ClangName}" = "ewc" ]; then
+      cd ewc
+      git fetch -q origin master
+      git pull origin master
+      cd ..
   fi
 }
 
@@ -143,7 +157,6 @@ export DEVICE_DEFCONFIG="merlin_defconfig"
 export ARCH="arm64"
 export KBUILD_BUILD_USER="Dréams"
 export KBUILD_BUILD_HOST="Soulvibe"
-export KBUILD_COMPILER_STRING="Soulvibeast clang version 18.5.1xRev1"
 export KERNEL_NAME="$(cat "arch/arm64/configs/$DEVICE_DEFCONFIG" | grep "CONFIG_LOCALVERSION=" | sed 's/CONFIG_LOCALVERSION="-*//g' | sed 's/"*//g' )"
 export SUBLEVEL="v4.14.$(cat "${MainPath}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')"
 IMAGE="${MainPath}/out/arch/arm64/boot/Image.gz-dtb"
