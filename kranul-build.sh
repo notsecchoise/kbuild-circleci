@@ -103,8 +103,10 @@ function getclang() {
     exit 1
   fi
   if [ ! -f '${MainClangPath}-${ClangName}/bin/clang' ]; then
-    export KBUILD_COMPILER_STRING="Soulvibe clang version 18.5.1xR0.1"
-  fi
+    export KBUILD_COMPILER_STRING="$(${MainClangPath}-${ClangName}/bin/clang --version | head -n 1)"
+  else
+    export KBUILD_COMPILER_STRING="Unknown"
+    fi
 }
 
 function updateclang() {
