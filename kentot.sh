@@ -78,7 +78,7 @@ DEFCONFIG=lancelot_defconfig
 
 # Specify compiler.
 # 'sdclang' or 'gcc' or 'ew' or 'aosp' | 'azure' | 'neutron' | 'proton'| 'eva'
-COMPILER=eva
+COMPILER=ew
 
 # Build modules. 0 = NO | 1 = YES
 MODULES=0
