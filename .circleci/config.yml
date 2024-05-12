@@ -41,7 +41,7 @@ jobs:
             sed -i 's/^CONFIG_LOCALVERSION=".*"/CONFIG_LOCALVERSION="-Paradox"/' arch/arm64/configs/${DEVICE_DEFCONFIG}
           environment:
             KERNEL_REPO: https://github.com/silont-project/kernel_xiaomi_sdm439.git
-            KERNEL_BRANCH: ksu
+            KERNEL_BRANCH: Tagetes
             DEVICE_DEFCONFIG: lineageos_mi439_defconfig
 
       - run:
