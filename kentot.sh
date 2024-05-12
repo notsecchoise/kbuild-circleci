@@ -14,9 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Personal script for kranul compilation !!
-# Inspired the script from Panchajanya1999 based.
-#
 
 # Function to show an informational message.
 msg()
