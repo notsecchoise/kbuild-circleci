@@ -63,7 +63,7 @@ function getclang() {
   elif [ "${ClangName}" = "proton" ]; then
     if [ ! -f "${MainClangPath}-proton/bin/clang" ]; then
       echo "[!] Clang is set to proton, cloning it..."
-      git clone https://gitlab.com/LeCmnGend/proton-clang.git -b clang-17 clang-proton --depth=1
+      git clone https://github.com/kdrag0n/proton-clang.git -b master clang-proton --depth=1
       ClangPath="${MainClangPath}"-proton
       export PATH="${ClangPath}/bin:${PATH}"
     else
@@ -223,7 +223,7 @@ function kernelsu() {
       if [ ! -f "${MainPath}/KernelSU/README.md" ]; then
         cd ${MainPath}
         curl -LSsk "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        sed -i "s/CONFIG_KSU=n/CONFIG_KSU=y/g" arch/${ARCH}/configs/${DEVICE_DEFCONFIG}
+        sed -i "s/CONFIG_KSU=n/CONFIG_KSU=y/g" arch/${ARCH}/configs/vendor/${DEVICE_DEFCONFIG}
       fi
       KERNELSU_VERSION="$((10000 + $(cd KernelSU && git rev-list --count HEAD) + 200))"
       git submodule update --init; cd ${MainPath}/KernelSU; git pull origin main; cd ..
