@@ -41,7 +41,7 @@ jobs:
             sed -i 's/^CONFIG_LOCALVERSION=".*"/CONFIG_LOCALVERSION="-Paradox"/' arch/arm64/configs/vendor/${DEVICE_DEFCONFIG}
           environment:
             KERNEL_REPO: https://github.com/Jprimero15/android_kernel_xiaomi_sdm439-4.19.git
-            KERNEL_BRANCH: v25
+            KERNEL_BRANCH: uvite
             DEVICE_DEFCONFIG: mi439-stock_defconfig
 
       - run:
