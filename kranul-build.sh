@@ -541,8 +541,8 @@ function kernelsu() {
 }
 
 clone
-exports
 kernelsu
+exports
 build_kernel
 
 if [ $LOG_DEBUG = "1" ]
