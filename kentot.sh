@@ -74,11 +74,11 @@ DEVICE="lancelot"
 
 # The defconfig which should be used. Get it from config.gz from
 # your device or check source
-DEFCONFIG=lancelot
+DEFCONFIG=lancelot_defconfig
 
 # Specify compiler.
 # 'sdclang' or 'gcc' or 'ew' or 'aosp' | 'azure' | 'neutron' | 'proton'| 'eva'
-COMPILER=ew
+COMPILER=eva
 
 # Build modules. 0 = NO | 1 = YES
 MODULES=0
