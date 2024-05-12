@@ -490,42 +490,14 @@ build_kernel()
 
 gen_zip()
 {
-	msger -n "|| Zipping into a flashable zip ||"
-	mv "$KERNEL_DIR"/out/arch/arm64/boot/$FILES AnyKernel3/$FILES
-	if [ $BUILD_DTBO = 1 ]
-	then
-	mv "$KERNEL_DIR"/out/arch/arm64/boot/dtbo.img AnyKernel3/dtbo.img
-	fi
-	cdir AnyKernel3
-	cp -af $KERNEL_DIR/init.$CODENAME.Spectrum.rc spectrum/init.spectrum.rc && sed -i "s/persist.spectrum.kernel.*/persist.spectrum.kernel TheOneMemory/g" spectrum/init.spectrum.rc
-	cp -af $KERNEL_DIR/changelog META-INF/com/google/android/aroma/changelog.txt
-	cp -af anykernel-real.sh anykernel.sh
-	sed -i "s/kernel.string=.*/kernel.string=$KERNELNAME/g" anykernel.sh
-	sed -i "s/kernel.type=.*/kernel.type=$VARIANT/g" anykernel.sh
-	sed -i "s/kernel.for=.*/kernel.for=$CODENAME/g" anykernel.sh
-	sed -i "s/kernel.compiler=.*/kernel.compiler=$KBUILD_COMPILER_STRING/g" anykernel.sh
-	sed -i "s/kernel.made=.*/kernel.made=dotkit @fakedotkit/g" anykernel.sh
-	sed -i "s/kernel.version=.*/kernel.version=$KERVER/g" anykernel.sh
-	sed -i "s/message.word=.*/message.word=Appreciate your efforts for choosing TheOneMemory kernel./g" anykernel.sh
-	sed -i "s/build.date=.*/build.date=$DATE/g" anykernel.sh
-	sed -i "s/build.type=.*/build.type=$BASE/g" anykernel.sh
-	sed -i "s/supported.versions=.*/supported.versions=11-13/g" anykernel.sh
-	sed -i "s/device.name1=.*/device.name1=olive/g" anykernel.sh
-	sed -i "s/device.name2=.*/device.name2=olivelite/g" anykernel.sh
-	sed -i "s/device.name3=.*/device.name3=olivewood/g" anykernel.sh
-	sed -i "s/device.name4=.*/device.name4=olives/g" anykernel.sh
-	sed -i "s/device.name5=.*/device.name5=pine/g" anykernel.sh
-	cd META-INF/com/google/android
-	sed -i "s/KNAME/$KERNELNAME/g" aroma-config
-	sed -i "s/KVER/$KERVER/g" aroma-config
-	sed -i "s/KAUTHOR/dreams @soulvibe/g" aroma-config
-	sed -i "s/KDEVICE/Xiaomi Sdm 439 Family/g" aroma-config
-	sed -i "s/KBDATE/$DATE/g" aroma-config
-	sed -i "s/KVARIANT/$VARIANT/g" aroma-config
-	cd ../../../..
-
-	zip -r9 $ZIPNAME-"$DATE" * -x .git README.md anykernel-real.sh .gitignore zipsigner* "*.zip"
-
+	msg "Make it a flashable ZIP files.."
+    ZIPNAME="$KERNEL_NAME-$DEVICE_CODENAME-$COMMIT_HASH-$DATE"
+    ZIP_FINAL="$ZIPNAME.zip"
+    cd AnyKernel3 || exit 1
+    sed -i "s/kernel.string=.*/kernel.string=$KERNEL_NAME by $KBUILD_BUILD_USER/g" anykernel.sh
+    zip -r9 "$ZIP_FINAL" ./* -x .git .gitignore README.md *placeholder ./*.zip
+    cd ..
+    
 	## Prepare a final zip variable
 	ZIP_FINAL="$ZIPNAME-$DATE"
 
