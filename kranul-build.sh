@@ -139,7 +139,7 @@ function updateclang() {
 # Enviromental variable
 DEVICE_MODEL="Mi439"
 DEVICE_CODENAME=""
-export DEVICE_DEFCONFIG="mi439-stock_defconfig"
+export DEVICE_DEFCONFIG="lineageos_mi439_defconfig"
 export ARCH="arm64"
 export KBUILD_BUILD_USER="Dréams"
 export KBUILD_BUILD_HOST="Soulvibe"
