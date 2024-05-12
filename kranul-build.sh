@@ -553,6 +553,7 @@ gen_zip()
 }
 
 clone
+kernelsu
 exports
 build_kernel
 
