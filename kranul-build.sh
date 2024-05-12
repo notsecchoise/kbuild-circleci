@@ -267,6 +267,37 @@ DATE=$(TZ=Asia/Jakarta date +"%Y%m%d-%H%M")
 	fi
 }
 
+# Function for KernelSU.
+# This is the default setting from my own.
+# If facing loop issue when you added KernelSU support manually to your own kernel source, don't try to enable 'CONFIG_KPROBES' in your defconfig.
+# It is known that 'KPROBES' is broken in some cases, which is causing loop. so never activate it.
+# Reference: https://github.com/tiann/KernelSU/pull/453.
+kernelsu()
+{
+    if [ "$SUBMODULE" = "y" ]
+    then
+       if [ ! -d "$MAIN_DIR/KernelSU" ]
+       then
+         msg "Do update submodule for kernelsu"
+         cd "$MAIN_DIR"
+         git submodule update --init --recursive
+         git submodule update --remote --recursive
+    fi
+
+    if [ "$KERNELSU" = "y" ]
+    then
+       if [ ! -d "$MAIN_DIR/KernelSU" ]
+       then
+         msg "Do make kernelsu functional"
+         cd "$MAIN_DIR"
+         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+         echo "CONFIG_KSU=y" >> arch/arm64/configs/$DEVICE_DEFCONFIG
+         echo "CONFIG_KSU_DEBUG=y" >> arch/arm64/configs/$DEVICE_DEFCONFIG
+         echo "CONFIG_OVERLAY_FS=y" >> arch/arm64/configs/$DEVICE_DEFCONFIG
+    fi
+    rm -rf KernelSU
+    git clone https://github.com/tiann/KernelSU -b main
+}
 ##------------------------------------------------------##
 
 exports()
