@@ -143,7 +143,7 @@ export DEVICE_DEFCONFIG="mi439-stock_defconfig"
 export ARCH="arm64"
 export KBUILD_BUILD_USER="Dréams"
 export KBUILD_BUILD_HOST="Soulvibe"
-export KERNEL_NAME="$(cat "arch/arm64/configs/vendor/$DEVICE_DEFCONFIG" | grep "CONFIG_LOCALVERSION=" | sed 's/CONFIG_LOCALVERSION="-*//g' | sed 's/"*//g' )"
+export KERNEL_NAME="$(cat "arch/arm64/configs/$DEVICE_DEFCONFIG" | grep "CONFIG_LOCALVERSION=" | sed 's/CONFIG_LOCALVERSION="-*//g' | sed 's/"*//g' )"
 export SUBLEVEL="v4.19.$(cat "${MainPath}/Makefile" | grep "SUBLEVEL =" | sed 's/SUBLEVEL = *//g')"
 IMAGE="${MainPath}/out/arch/arm64/boot/Image.gz-dtb"
 CORES="$(nproc --all)"
@@ -223,7 +223,7 @@ function kernelsu() {
       if [ ! -f "${MainPath}/KernelSU/README.md" ]; then
         cd ${MainPath}
         curl -LSsk "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-        sed -i "s/CONFIG_KSU=n/CONFIG_KSU=y/g" arch/${ARCH}/configs/vendor/${DEVICE_DEFCONFIG}
+        sed -i "s/CONFIG_KSU=n/CONFIG_KSU=y/g" arch/${ARCH}/configs/${DEVICE_DEFCONFIG}
       fi
       KERNELSU_VERSION="$((10000 + $(cd KernelSU && git rev-list --count HEAD) + 200))"
       git submodule update --init; cd ${MainPath}/KernelSU; git pull origin main; cd ..
