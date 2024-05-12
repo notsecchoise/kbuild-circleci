@@ -38,11 +38,11 @@ jobs:
             git config --global user.email "${CIRCLE_PROJECT_USERNAME}@gmail.com"
             git clone ${KERNEL_REPO} -b ${KERNEL_BRANCH} --depth=500 kernel
             cd kernel 
-            sed -i 's/^CONFIG_LOCALVERSION=".*"/CONFIG_LOCALVERSION="-Paradox"/' arch/arm64/configs/${DEVICE_DEFCONFIG}
+            sed -i 's/^CONFIG_LOCALVERSION=".*"/CONFIG_LOCALVERSION="-Paradox"/' arch/arm64/configs/vendor/${DEVICE_DEFCONFIG}
           environment:
-            KERNEL_REPO: https://github.com/Soulvibe-Stuff/android_kernel_xiaomi_mt6768.git
-            KERNEL_BRANCH: Paradox-SLMK
-            DEVICE_DEFCONFIG: lancelot_defconfig
+            KERNEL_REPO: https://github.com/Jprimero15/lolz_kernel_redmi8.git
+            KERNEL_BRANCH: v27
+            DEVICE_DEFCONFIG: mi439-stock_defconfig
 
       - run:
           name: Build
