@@ -38,11 +38,11 @@ jobs:
             git config --global user.email "${CIRCLE_PROJECT_USERNAME}@gmail.com"
             git clone ${KERNEL_REPO} -b ${KERNEL_BRANCH} --depth=500 kernel
             cd kernel 
-            sed -i 's/^CONFIG_LOCALVERSION=".*"/CONFIG_LOCALVERSION="-Paradox"/' arch/arm64/configs/vendor/${DEVICE_DEFCONFIG}
+            sed -i 's/^CONFIG_LOCALVERSION=".*"/CONFIG_LOCALVERSION="-Paradox"/' arch/arm64/configs/${DEVICE_DEFCONFIG}
           environment:
-            KERNEL_REPO: https://github.com/Jprimero15/android_kernel_xiaomi_sdm439-4.19.git
-            KERNEL_BRANCH: uvite
-            DEVICE_DEFCONFIG: mi439-stock_defconfig
+            KERNEL_REPO: https://github.com/silont-project/kernel_xiaomi_sdm439.git
+            KERNEL_BRANCH: ksu
+            DEVICE_DEFCONFIG: lineageos_mi439_defconfig
 
       - run:
           name: Build
