@@ -1,317 +1,371 @@
-#!/usr/bin/env bash
-#
-# Copyright (C) 2022-2023, Neebe3289 <neebexd@gmail.com>
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#      http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+#!/usr/bin/bash
+# Define some things
+# Kernel common
+export ARCH=arm64
+export localversion=-X1.6
+export LINKER="ld.lld"
+# Telegram API
+export SEND_TO_TG=1
+export chat_id="-1002088104319"
+export token="6410284454:AAESx0jgdzy-z4W0t-Oo53NaaS-mhGka8_4"
+# Telegram && Output
+export kver="Test"
+export CODENAME="lancelot"
+export DEVICE="Xiaomi Redmi 9 (${CODENAME})"
+export BUILDER="Dreams"
+export BUILD_HOST="Soulvibe"
+export TIMESTAMP=$(date +"%Y%m%d")-$(date +"%H%M%S")
+export KBUILD_COMPILER_STRING=$(./clang/bin/clang -v 2>&1 | head -n 1 | sed 's/(https..*//' | sed 's/ version//')
+export FW="R-Vendor"
+export zipn="Liquid-${CODENAME}-${FW}-${TIMESTAMP}"
+# Needed by script
+export PATH="${PWD}/clang/bin:${PATH}"
+PROCS=$(nproc --all)
 
-# Function to show an informational message.
-msg()
-{
-    echo -e "\e[1;32m$*\e[0m"
-}
+# Text coloring
+NOCOLOR='\033[0m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+ORANGE='\033[0;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+LIGHTGRAY='\033[0;37m'
+DARKGRAY='\033[1;30m'
+LIGHTRED='\033[1;31m'
+LIGHTGREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+LIGHTBLUE='\033[1;34m'
+LIGHTPURPLE='\033[1;35m'
+LIGHTCYAN='\033[1;36m'
+WHITE='\033[1;37m'
 
-err()
-{
-    echo -e "\e[1;31m$*\e[0m"
-}
-
-# Check telegtam token/id
-if [ -z "-1002088104319" ] || [ -z "6410284454:AAESx0jgdzy-z4W0t-Oo53NaaS-mhGka8_4" ]
-then
-    err "Missing environment! .Please check again . ."
-    exit
+# Check permission
+script_permissions=$(stat -c %a "$0")
+if [ "$script_permissions" -lt 777 ]; then
+    echo -e "${RED}error:${NOCOLOR} Don't have enough permission"
+    echo "run 'chmod 0777 origami_kernel_builder.sh' and rerun"
+    exit 126
 fi
 
-#####################
-# Basic Information #
-#####################
+# Check dependencies
+if ! hash make curl bc zip 2>/dev/null; then
+        echo -e "${RED}error:${NOCOLOR} Environment has missing dependencies"
+        echo "Install make, curl, bc, and zip !"
+        exit 127
+fi
 
-# Set main directory of kernel source.
-MAIN_DIR="$(pwd)"
+if [ ! -d "${PWD}/clang" ]; then
+    echo -e "${RED}error:${NOCOLOR} /clang not found!"
+    echo "have you clone the clang?"
+    exit 2
+fi
 
-# Specify name of device model.
-# e.g: 'Redmi note 8 Pro'
-DEVICE_MODEL="Xiaomi Redmi 9"
 
-# Specify name of device codename.
-# e.g: 'begonia'
-DEVICE_CODENAME="lancelot"
+if [ ! -d "${PWD}/anykernel" ]; then
+    echo -e "${RED}error:${NOCOLOR} /anykernel not found!"
+    echo "have you clone the anykernel?"
+    exit 2
+fi
 
-# Set default achitecture.
-ARCH=arm64
+# Exit while got interrupt signal
+exit_on_signal_interrupt() {
+    echo -e "\n\n${RED}Got interrupt signal.${NOCOLOR}"
+    exit 130
+}
+trap exit_on_signal_interrupt SIGINT
 
-# Set device defconfig name.
-# e.g: 'begonia_user_defconfig'
-DEVICE_DEFCONFIG=lancelot_defconfig
-
-# Set default image files/artifacts.
-IMAGE=Image.gz-dtb
-
-# Specify kernel name for ZIP name
-KERNEL_NAME="Paradox-Kernel"
-
-# Check kernel version.
-SUBLEVEL=$(make kernelversion)
-
-# Grab git current branch.
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-
-# Grab git commit hash.
-COMMIT_HASH=$(git rev-parse --short HEAD)
-
-# Set date into ZIP name.
-DATE=$(date +"%Y%m%d-%H%M")
-
-# Specify command to get KernelSU function.
-# 'n' is NO(default) | 'y' is YES
-KERNELSU=n
-
-# Specify command to update submodule for KernelSU.
-# 'n' is NO(default) | 'y' is YES
-SUBMODULE=n
-
-# Specify command name to set default compiler or toolchain.
-# 'aosp'(default) | 'azure' | 'neutron' | 'proton'| 'eva'
-TOOLCHAIN=proton
-
-# Clone compiler, anykernel3 and telegram.sh
-clone()
-{
-     if [ "$TOOLCHAIN" = "aosp" ]
-     then
-          msg "Clone latest aosp clang toolchain"
-          wget https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-r498229.tar.gz -O "aosp-clang.tar.gz"
-          mkdir clang-llvm && tar -xf aosp-clang.tar.gz -C clang-llvm && rm -rf aosp-clang.tar.gz
-          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9 -b lineage-19.1 gcc64
-          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_arm_arm-linux-androideabi-4.9 -b lineage-19.1 gcc32
-     elif [ "$TOOLCHAIN" = "azure" ]
-     then
-          msg "Clone latest azure clang toolchain"
-          git clone --depth=1 https://gitlab.com/Panchajanya1999/azure-clang.git clang-llvm
-     elif [ "$TOOLCHAIN" = "neutron" ]
-     then
-          msg "Clone latest neutron clang toolchain"
-          mkdir clang-llvm
-          cd clang-llvm
-          curl -LO "https://raw.githubusercontent.com/Neutron-Toolchains/antman/main/antman"
-          chmod +x antman && bash antman -S=latest
-          bash antman --patch=glibc
-          cd ..
-     elif [ "$TOOLCHAIN" = "proton" ]
-     then
-          msg "Clone latest proton clang toolchain"
-          git clone --depth=1 https://github.com/kdrag0n/proton-clang.git clang-llvm
-     elif [ "$TOOLCHAIN" = "eva" ]
-     then
-          msg "Clone latest eva gcc toolchain"
-          git clone --depth=1 https://github.com/mvaisakh/gcc-arm64.git gcc-arm64
-          git clone --depth=1 https://github.com/mvaisakh/gcc-arm.git gcc-arm
-     fi
-
-     msg "Clone AnyKernel3 source"
-     git clone --depth=1 https://github.com/Neebe3289/AnyKernel3 -b begonia AnyKernel3
-
-     msg "Clone telegram.sh source"
-     git clone --depth=1 https://github.com/fabianonline/telegram.sh telegram
+help_msg() {
+    echo "Usage: bash kentot.sh --choose=[Function]"
+    echo ""
+    echo "Some functions on Origami Kernel Builder:"
+    echo "1. Build a whole Kernel"
+    echo "2. Regenerate defconfig"
+    echo "3. Open menuconfig"
+    echo "4. Clean"
+    echo ""
+    echo "Place this script inside the Kernel Tree."
 }
 
-# Export
-exports()
-{
-       # Set Indonesian timezone
-       TZ="Asia/Jakarta"
+send_msg_telegram() {
+    case "$1" in
+    1) curl -s -X POST "https://api.telegram.org/bot$token/sendMessage" \
+                -d chat_id="$chat_id" \
+                -d "disable_web_page_preview=true" \
+                -d "parse_mode=html" \
+                -d text="<b>~~~ SOULVIBE CI ~~~</b>
+<b>Build Started on ${BUILD_HOST}</b>
+<b>Build status</b>: <code>${kver}</code>
+<b>Builder</b>: <code>${BUILDER}</code>
+<b>Device</b>: <code>${DEVICE}</code>
+<b>Kernel Version</b>: <code>$(make kernelversion 2>/dev/null)</code>
+<b>Date</b>: <code>$(date)</code>
+<b>Zip Name</b>: <code>${zipn}</code>
+<b>Defconfig</b>: <code>${DEFCONFIG}</code>
+<b>Compiler</b>: <code>${KBUILD_COMPILER_STRING}</code>
+<b>Branch</b>: <code>$(git rev-parse --abbrev-ref HEAD)</code>
+<b>Last Commit</b>: <code>$(git log --format="%s" -n 1): $(git log --format="%h" -n 1)</code>" \
+                -o /dev/null
+        ;;
+    2) curl -s -F document=@./out/build.log "https://api.telegram.org/bot$token/sendDocument" \
+                -F chat_id="$chat_id" \
+                -F "disable_web_page_preview=true" \
+                -F "parse_mode=html" \
+                -F caption="Build failed after ${minutes} minutes and ${seconds} seconds." \
+                -o /dev/null \
+                -w "" >/dev/null 2>&1
+        ;;
+    3) curl -s -F document=@./out/target/"${zipn}".zip "https://api.telegram.org/bot$token/sendDocument" \
+                -F chat_id="$chat_id" \
+                -F "disable_web_page_preview=true" \
+                -F "parse_mode=html" \
+                -F caption="Build took ${minutes} minutes and ${seconds} seconds.
+<b>SHA512</b>: <code>${checksum}</code>" \
+                -o /dev/null \
+                -w "" >/dev/null 2>&1
 
-       # Specify user name and host name
-       KBUILD_BUILD_USER="Archie"
-       KBUILD_BUILD_HOST="Soulvibe"
-
-       if [ "$TOOLCHAIN" = "aosp" ]
-       then
-            PATH=$MAIN_DIR/clang-llvm/bin:$MAIN_DIR/gcc64/bin:$MAIN_DIR/gcc32/bin:$PATH
-            LD_LIBRARY_PATH=$MAIN_DIR/clang-llvm/lib:$LD_LIBRARY_PATH
-            KBUILD_COMPILER_STRING=$("$MAIN_DIR"/clang-llvm/bin/clang --version | head -n 1)
-            COMPILER=$KBUILD_COMPILER_STRING
-       elif [ "$TOOLCHAIN" = "azure" ] || [ "$TOOLCHAIN" = "neutron" ] || [ "$TOOLCHAIN" = "proton" ]
-       then
-            PATH=$MAIN_DIR/clang-llvm/bin:$PATH
-            KBUILD_COMPILER_STRING=$("$MAIN_DIR"/clang-llvm/bin/clang --version | head -n 1)
-            COMPILER=$KBUILD_COMPILER_STRING
-       elif [ "$TOOLCHAIN" = "eva" ]
-       then
-            PATH=$MAIN_DIR/gcc-arm64/bin:$MAIN_DIR/gcc-arm/bin:$PATH
-            KBUILD_COMPILER_STRING=$("$MAIN_DIR"/gcc-arm64/bin/aarch64-elf-gcc --version | head -n 1)
-            COMPILER=$KBUILD_COMPILER_STRING
-       fi
-
-       # Specify CPU core/thread for compilation.
-       # e.g: '2'/'4'/'8'/'12' or set default by using 'nproc --all'
-       CORES=$(nproc --all)
-
-       # Telegram directory.
-       TELEGRAM=$MAIN_DIR/telegram/telegram
-
-       export TZ ARCH DEVICE_DEFCONFIG KBUILD_BUILD_USER KBUILD_BUILD_HOST \
-              PATH KBUILD_COMPILER_STRING COMPILER CORES \
-              TELEGRAM
+        curl -s -F document=@./out/build.log "https://api.telegram.org/bot$token/sendDocument" \
+                -F chat_id="$chat_id" \
+                -F "disable_web_page_preview=true" \
+                -F "parse_mode=html" \
+                -F caption="Build log" \
+                -o /dev/null \
+                -w "" >/dev/null 2>&1
+        ;;
+    esac
 }
 
-# Function to show an informational message to telegram.
-send_msg()
-{
-    "${TELEGRAM}" -H -D \
-        "$(
-            for POST in "${@}"; do
-                echo "${POST}"
-            done
-        )"
-}
+show_defconfigs() {
+    defconfig_path="./arch/${ARCH}/configs"
 
-send_file()
-{
-    "${TELEGRAM}" -H \
-        -f "$1" \
-        "$2"
-}
-
-# Function for KernelSU.
-# This is the default setting from my own.
-# If facing loop issue when you added KernelSU support manually to your own kernel source, don't try to enable 'CONFIG_KPROBES' in your defconfig.
-# It is known that 'KPROBES' is broken in some cases, which is causing loop. so never activate it.
-# Reference: https://github.com/tiann/KernelSU/pull/453.
-kernelsu()
-{
-    if [ "$SUBMODULE" = "y" ]
-    then
-       if [ ! -d "$MAIN_DIR/KernelSU" ]
-       then
-         msg "Do update submodule for kernelsu"
-         cd "$MAIN_DIR"
-         git submodule update --init --recursive
-         git submodule update --remote --recursive
+    # Check if folder exists
+    if [ ! -d "$defconfig_path" ]; then
+        echo -e "${RED}FATAL:${NOCOLOR} Seems not a valid Kernel linux"
+        exit 2
     fi
 
-    if [ "$KERNELSU" = "y" ]
-    then
-       if [ ! -d "$MAIN_DIR/KernelSU" ]
-       then
-         msg "Do make kernelsu functional"
-         cd "$MAIN_DIR"
-         curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
-         echo "CONFIG_KSU=y" >> arch/arm64/configs/$DEVICE_DEFCONFIG
-         echo "CONFIG_KSU_DEBUG=y" >> arch/arm64/configs/$DEVICE_DEFCONFIG
-         echo "CONFIG_OVERLAY_FS=y" >> arch/arm64/configs/$DEVICE_DEFCONFIG
+    echo -e "Available defconfigs:\n"
+
+    # List defconfigs and assign them to an array
+    defconfigs=($(ls "$defconfig_path"))
+
+    # Display enumerated defconfigs
+    for ((i=0; i<${#defconfigs[@]}; i++)); do
+        echo -e "${LIGHTCYAN}$i: ${defconfigs[i]}${NOCOLOR}"
+    done
+
+    echo ""
+    read -p "Select the defconfig you want to process: " choice
+
+    # Check if the choice is within the range of files
+    if [ $choice -ge 0 ] && [ $choice -lt ${#defconfigs[@]} ]; then
+        export DEFCONFIG="${defconfigs[choice]}"
+        echo "Selected defconfig: $DEFCONFIG"
+    else
+        echo -e "${RED}error:${NOCOLOR} Invalid choice"
+        exit 1
     fi
-    rm -rf KernelSU
-    git clone https://github.com/tiann/KernelSU -b main
 }
 
-# Make it ZIP.
-make_zip()
-{
-    msg "Make it a flashable ZIP files.."
-    ZIPNAME="$KERNEL_NAME-$DEVICE_CODENAME-$COMMIT_HASH-$DATE"
-    ZIP_FINAL="$ZIPNAME.zip"
-    cd AnyKernel3 || exit 1
-    sed -i "s/kernel.string=.*/kernel.string=$KERNEL_NAME by $KBUILD_BUILD_USER/g" anykernel.sh
-    zip -r9 "$ZIP_FINAL" ./* -x .git .gitignore README.md *placeholder ./*.zip
+compile_kernel() {
+    rm ./out/arch/${ARCH}/boot/Image.gz-dtb 2>/dev/null
+
+    export KBUILD_BUILD_USER=${BUILDER}
+    export KBUILD_BUILD_HOST=${BUILD_HOST}
+    export LOCALVERSION=${localversion}
+
+    make O=out ARCH=${ARCH} ${DEFCONFIG}
+
+    START=$(date +"%s")
+
+    make -j"$PROCS" O=out \
+        ARCH=${ARCH} \
+        LD="${LINKER}" \
+        AR=llvm-ar \
+        AS=llvm-as \
+        NM=llvm-nm \
+        OBJDUMP=llvm-objdump \
+        STRIP=llvm-strip \
+        CC="clang" \
+        CLANG_TRIPLE=aarch64-linux-gnu- \
+        CROSS_COMPILE=aarch64-linux-gnu- \
+        CROSS_COMPILE_ARM32=arm-linux-gnueabihf- \
+        CONFIG_NO_ERROR_ON_MISMATCH=y \
+        CONFIG_DEBUG_SECTION_MISMATCH=y \
+        V=0 2>&1 | tee out/build.log
+
+    END=$(date +"%s")
+    DIFF=$((END - START))
+    export minutes=$((DIFF / 60))
+    export seconds=$((DIFF % 60))
+}
+
+zip_kernel() {
+    # Move kernel image to anykernel zip
+if [ ! -f "./out/arch/${ARCH}/boot/Image.gz-dtb" ]; then
+    cp ./out/arch/${ARCH}/boot/Image.gz ./anykernel
+else
+    cp ./out/arch/${ARCH}/boot/Image.gz-dtb ./anykernel
+fi
+    # Zip the kernel
+    cd ./anykernel
+    zip -r9 "${zipn}".zip * -x .git README.md *placeholder
     cd ..
+
+    # Generate checksum of kernel zip
+    export checksum=$(sha512sum ./anykernel/"${zipn}".zip | cut -f1 -d ' ')
+
+    if [ ! -d "./out/target" ]; then
+        mkdir ./out/target
+    fi
+
+if [ ! -f "./out/arch/${ARCH}/boot/Image.gz-dtb" ]; then
+    rm -f ./anykernel/Image.gz
+else
+    rm -f ./anykernel/Image.gz-dtb
+fi
+
+    # Move the kernel zip to ./out/target
+    mv ./anykernel/${zipn}.zip ./out/target
 }
 
-# Upload ZIP files to Telegram.
-send_zip()
-{
-    msg "Start to upload ZIP files.."
-    cd AnyKernel3
-    ZIPFILE=$(echo *.zip)
-    SHA1=$(sha1sum "$ZIPFILE" | cut -d' ' -f1)
-    send_file "$ZIPFILE" "✅ Build took : $((DIFF / 60)) minute(s) and $((DIFF % 60)) second(s) for $DEVICE_CODENAME | SHA1 : <code>$SHA1</code>"
+build_kernel() {
+    show_defconfigs
+
+    echo -e "${LIGHTBLUE}================================="
+    echo "Build Started on ${BUILD_HOST}"
+    echo "Build status: ${kver}"
+    echo "Builder: ${BUILDER}"
+    echo "Device: ${DEVICE}"
+    echo "Kernel Version: $(make kernelversion 2>/dev/null)"
+    echo "Date: $(date)"
+    echo "Zip Name: ${zipn}"
+    echo "Defconfig: ${DEFCONFIG}"
+    echo "Compiler: ${KBUILD_COMPILER_STRING}"
+    echo "Branch: $(git rev-parse --abbrev-ref HEAD)"
+    echo "Last Commit: $(git log --format="%s" -n 1): $(git log --format="%h" -n 1)"
+    echo -e "=================================${NOCOLOR}"
+
+    if [ "$SEND_TO_TG" -eq 1 ]; then
+        send_msg_telegram 1
+    fi
+
+    compile_kernel
+
+    if [ ! -f "./out/arch/${ARCH}/boot/Image.gz-dtb" ] && [ ! -f "./out/arch/${ARCH}/boot/Image.gz" ]; then
+        if [ "$SEND_TO_TG" -eq 1 ]; then
+            send_msg_telegram 2
+        fi
+        echo -e "${LIGHTBLUE}================================="
+        echo -e "${RED}Build failed${LIGHTBLUE} after ${minutes} minutes and ${seconds} seconds"
+        echo "See build log for troubleshooting."
+        echo -e "=================================${NOCOLOR}"
+        exit 1
+    fi
+
+    zip_kernel
+
+    echo -e "${LIGHTBLUE}================================="
+    echo "Build took ${minutes} minutes and ${seconds} seconds."
+    echo "SHA512: ${checksum}"
+    echo -e "=================================${NOCOLOR}"
+
+    if [ "$SEND_TO_TG" -eq 1 ]; then
+        send_msg_telegram 3
+    fi
 }
 
-# Function for upload error log during compiled.
-send_log()
-{
-    ERROR_LOG=$(echo error.log)
-    send_file "$ERROR_LOG" "❌ Build failed to compile, Please check log to fix it!"
-    exit 1
+regen_defconfig() {
+show_defconfigs
+make O=out ARCH=${ARCH} ${DEFCONFIG}
+cp -rf ./out/.config ./arch/${ARCH}/configs/${DEFCONFIG}
 }
 
-# Compilation setup.
-compile()
-{
-     BUILD_START=$(date +"%s")
-     kernelsu
-     send_msg "<b>============================================</b>" \
-        "<b>• DATE :</b> <code>$(TZ=Asia/Jakarta date +"%A, %d %b %Y, %H:%M:%S")</code>" \
-        "<b>• DEVICE :</b> <code>$DEVICE_MODEL [$DEVICE_CODENAME]</code>" \
-        "<b>• KERNEL NAME :</b> <code>$KERNEL_NAME</code>" \
-        "<b>• LINUX VERSION :</b> <code>$SUBLEVEL</code>" \
-        "<b>• BRANCH NAME :</b> <code>$BRANCH</code>" \
-        "<b>• COMPILER :</b> <code>$COMPILER</code>" \
-        "<b>• LAST COMMIT :</b> <code>$(git log --pretty=format:'%s' -1)</code>" \
-        "<b>============================================</b>" \
-
-     if [ "$TOOLCHAIN" = "aosp" ]
-     then
-          MAKE+=(
-              LLVM=1 \
-              LLVM_IAS=1 \
-              CLANG_TRIPLE=aarch64-linux-gnu- \
-              CROSS_COMPILE=aarch64-linux-android- \
-              CROSS_COMPILE_ARM32=arm-linux-androideabi-
-          )
-     elif [ "$TOOLCHAIN" = "azure" ] || [ "$TOOLCHAIN" = "neutron" ] || [ "$TOOLCHAIN" = "proton" ]
-     then
-          MAKE+=(
-              LLVM=1 \
-              LLVM_IAS=1 \
-              CROSS_COMPILE=aarch64-linux-gnu- \
-              CROSS_COMPILE_ARM32=arm-linux-gnueabi-
-          )
-     elif [ "$TOOLCHAIN" = "eva" ]
-     then
-          MAKE+=(
-              AR=aarch64-elf-ar \
-              LD=aarch64-elf-ld.lld \
-              NM=aarch64-elf-nm \
-              OBCOPY=aarch64-elf-objcopy \
-              OBJDUMP=aarch64-elf-objdump \
-              STRIP=aarch64-elf-strip \
-              CROSS_COMPILE=aarch64-elf- \
-              CROSS_COMPILE_ARM32=arm-eabi-
-          )
-     fi
-
-     msg "Compilation has been started.."
-     make O=out ARCH=arm64 $DEVICE_DEFCONFIG
-     make -j"$CORES" ARCH=arm64 O=out \
-           "${MAKE[@]}" 2>&1 | tee error.log
-
-     if ! [ -a "$MAIN_DIR"/out/arch/arm64/boot/$IMAGE ]
-     then
-          err "Build failed to compile, check log to fix it!"
-          send_log
-          exit 1
-     else
-          msg "Kernel succesfully to compile!"
-          cp "$MAIN_DIR"/out/arch/arm64/boot/$IMAGE AnyKernel3
-     fi
+open_menuconfig() {
+show_defconfigs
+make O=out ARCH=${ARCH} ${DEFCONFIG}
+echo -e "${LIGHTGREEN}Note: Make sure you save the config with name '.config'"
+echo -e "      else the defconfig will not saved automatically.${NOCOLOR}"
+local count=8
+while [ $count -gt 0 ]; do
+    echo -ne -e "${LIGHTCYAN}menuconfig will be opened in $count seconds... \r${NOCOLOR}"
+    sleep 1
+    ((count--))
+done
+make O=out menuconfig
+cp -rf ./out/.config ./arch/${ARCH}/configs/${DEFCONFIG}
 }
 
-clone
-exports
-compile
-BUILD_END=$(date +"%s")
-DIFF=$((BUILD_END - BUILD_START))
-make_zip
-send_zip
+execute_operation() {
+
+   loop_helper() {
+      read -p "Press enter to continue or type 0 for Quit: " a1
+      clear
+      if [[ "$a1" == "0" ]]; then
+          exit 0
+      else
+          bash "$0"
+      fi
+   }
+
+   case "$1" in
+        1) clear
+            build_kernel
+            loop_helper
+            ;;
+        2) clear
+            regen_defconfig
+            loop_helper
+             ;;
+        3) clear
+             open_menuconfig
+             loop_helper
+             ;;
+        4) clear
+            make clean && make mrproper
+            loop_helper
+            ;;
+        5) exit 0 && clear ;;
+        6) help_msg ;;
+        *) echo -e "${RED}error:${NOCOLOR} Invalid selection." && exit 1 ;;
+    esac
+}
+
+if [ $# -eq 0 ]; then
+    clear
+    echo -e "${LIGHTCYAN}What do you want to do today?"
+    echo ""
+    echo "1. Build a whole Kernel"
+    echo "2. Regenerate defconfig"
+    echo "3. Open menuconfig"
+    echo "4. Clean"
+    echo "5. Quit"
+    echo -e "${NOCOLOR}"
+    read -p "Choice the number: " choice
+else
+    case "$1" in
+        --choose=1)
+            choice=1
+            ;;
+        --choose=2)
+            choice=2
+            ;;
+        --choose=3)
+            choice=3
+            ;;
+        --choose=4)
+            choice=4
+            ;;
+        --help)
+            choice=6
+            ;;
+        *)
+            echo -e "${RED}error:${NOCOLOR} Not a valid argument"
+            echo "Try 'bash origami_kernel_builder.sh --help' for more information."
+            exit 1
+            ;;
+    esac
+fi
+
+# Main script logic
+execute_operation "$choice"
