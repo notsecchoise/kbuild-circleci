@@ -28,11 +28,9 @@ err()
 {
     echo -e "\e[1;31m$*\e[0m"
 }
-TELEGRAM_TOKEN"6410284454:AAESx0jgdzy-z4W0t-Oo53NaaS-mhGka8_4"
-TELEGRAM_CHAT"-1002088104319"
 
 # Check telegtam token/id
-if [ -z "$TELEGRAM_TOKEN" ] || [ -z "$TELEGRAM_CHAT" ]
+if [ -z "-1002088104319" ] || [ -z "6410284454:AAESx0jgdzy-z4W0t-Oo53NaaS-mhGka8_4" ]
 then
     err "Missing environment! .Please check again . ."
     exit
